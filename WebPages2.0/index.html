@@ -24,7 +24,22 @@
                 <button class="btn btn-primary" style="width: 90vw; height: 100px">Configurações</button>
             </div>
             <div class="center-x">
-                <button class="btn btn-secondary" style="width: 90vw">Relógio</button>
+                <button class="btn btn-secondary" style="width: 90vw" onclick="document.getElementById('modal').style.display='block'">Relógio</button>
+            </div>
+            <div id="modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-container">
+                        <h3>Relógio</h3>
+                        <div class="risk"></div>
+                        <form>
+                            <input name="clk" type="text" class="center-x" style="width: 90%" placeholder="00:00">
+                            <div class="center-x" style="padding-bottom: 14px">
+                                <button type="button" class="btn btn-secondary" style="width: 49%" onclick="document.getElementById('modal').style.display='none'">Fechar</button>
+                                <button type="submit" class="btn btn-success" style="width: 49%">Configurar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </body>
