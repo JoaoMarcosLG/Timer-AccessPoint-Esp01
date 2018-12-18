@@ -5,7 +5,6 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link rel="stylesheet" href="style.css">
-        <link rel="stylesheet" href="modal.css">
     </head>
     <body>
         <div class="flex-container">
@@ -32,7 +31,7 @@
                         <h3>Relógio</h3>
                         <div class="risk"></div>
                         <form>
-                            <input name="clk" type="text" class="center-x" style="width: 90%" placeholder="00:00">
+                            <input name="clk" type="text" class="center-x" style="width: 90%" placeholder="00:00" autocomplete="off" maxlength="5" onkeyup="check_time(this)">
                             <div class="center-x" style="padding-bottom: 14px">
                                 <button type="button" class="btn btn-secondary" style="width: 49%" onclick="document.getElementById('modal').style.display='none'">Fechar</button>
                                 <button type="submit" class="btn btn-success" style="width: 49%">Configurar</button>
@@ -44,5 +43,4 @@
         </div>
     </body>
     <script src="script.js"></script>
-    <script src="modal.js"></script>
 </html>
