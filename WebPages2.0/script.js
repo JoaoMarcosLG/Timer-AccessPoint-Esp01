@@ -4,7 +4,7 @@ function check_time(element, repeat) {
     if(!(id in previous_length)) { previous_length[id] = 0; }
 
     for(let i=0; i < repeat; i++) {
-        if(element.value.length == ((2*i)+2+(i*1)) && element.value.length > previous_length[id]) {
+        if(element.value.length == ((3*i)+2) && element.value.length > previous_length[id]) {
             element.value += ':';
         }
     }
