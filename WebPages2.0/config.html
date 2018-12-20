@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-br">
+    <head>
+        <title>Timer</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div class="flex-container">
+            <h3 class="center-x">Configurações</h3>
+            <div class="risk"></div>
+            <h5 class="center-x">Modo: {{ mode }}</h5>
+            <h5 class="center-x">{{ info }}</h5>
+            <div class="center-x" style="margin-top: 12px">
+                <button class="btn btn-secondary" style="width: 90vw" onclick="window.location.replace('config_time.html')">Configurar</button>
+            </div>
+            <div class="center-x">
+                <button class="btn btn-primary" style="width: 90vw" onclick="window.location.replace('index.html')">Inicio</button>
+            </div>
+        </div>
+    </body>
+    <script src="script.js"></script>
+</html>
