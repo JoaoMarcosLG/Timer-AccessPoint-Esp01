@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-br">
+    <head>
+        <title>Timer</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div class="flex-container">
+            <h3 class="center-x">Horários</h3>
+            <div class="risk"></div>
+            <form id="test">
+                <div id="times-container">
+                    <div class="time-input">
+                        <label>Horário 1:</label>
+                        <input name="h1" type="text" placeholder="00:00" autocomplete="off" maxlength="5" onkeyup="check_time(this, 1)" required>
+                        <button type="button" class="btn btn-success" onclick="add_cell()">+</button>                    
+                    </div>
+                </div>
+                <div class="time-input">
+                    <label>Tempo ligado:</label>
+                    <input name="h1" type="text" placeholder="00:00:00" autocomplete="off" maxlength="8" onkeyup="check_time(this, 2)" required>
+                </div>
+                <div class="center-x" style="padding-bottom: 14px">
+                    <button type="button" class="btn btn-secondary" style="width: 49%" onclick="window.location.replace('config.html')">Cancelar</button>
+                    <button type="submit" class="btn btn-success" style="width: 49%">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </body>
+    <script src="script.js"></script>
+</html>
