@@ -1,6 +1,6 @@
 var previous_length = {};
 function check_time(element, repeat) {
-    id = element.previousElementSibling;
+    id = element.name;
     if(!(id in previous_length)) { previous_length[id] = 0; }
 
     for(let i=0; i < repeat; i++) {
@@ -16,7 +16,7 @@ var time_count = 1;
 function add_cell() {
     let new_cell = document.createElement('div');
     new_cell.className = 'time-input';
-    new_cell.innerHTML = `<label>Horário ${++time_count}:</label><input name="h${time_count}" type="text" placeholder="00:00" autocomplete="off" maxlength="5" onkeyup="check_time(this)" required><button type="button" class="btn btn-success" style="height: 42px" onclick="add_cell()">+</button>`;
+    new_cell.innerHTML = `<label>Horário ${++time_count}:</label><input name="h${time_count}" type="text" placeholder="00:00" autocomplete="off" maxlength="5" onkeyup="check_time(this, 1)" required><button type="button" class="btn btn-success" style="height: 42px" onclick="add_cell()">+</button>`;
     document.getElementById('times-container').appendChild(new_cell);
     
     let previous_button = new_cell.previousElementSibling.getElementsByTagName('button')[0];
