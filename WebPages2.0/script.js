@@ -1,9 +1,16 @@
-var previous_length = 0;
+var previous_length = {};
+function check_time(element, repeat) {
+    id = element.previousElementSibling;
+    if(!(id in previous_length)) { previous_length[id] = 0; }
 
-function check_time(element) {
-    if(element.value.length == 2 && element.value.length > previous_length) {
-        element.value += ':';
+    for(let i=0; i < repeat; i++) {
+        if(element.value.length == ((2*i)+2+(i*1)) && element.value.length > previous_length[id]) {
+            element.value += ':';
+        }
     }
+
+    previous_length[id] = element.value.length;
+}
 
 var time_count = 1;
 function add_cell() {
