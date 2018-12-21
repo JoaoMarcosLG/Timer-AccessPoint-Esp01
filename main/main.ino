@@ -113,8 +113,6 @@ void wifiSleep();     // Funcao que desliga AccessPoint
 void handleRoot();    // Funcao da pagina HTML principal
 void handleTime();    // Funcao da pagina HTML de visualizacao dos horarios
 void handleConfig();  // Funcao da pagina HTML de configuracao dos horarios de acionamento
-void handleClock();   // Funcao da pagina HTML de configuracao do relogio
-void handleDel();     // Funcao da pagina HTML de apagar horarios cadastrados
 
 // --- MAIN ---
 void setup() {
@@ -255,13 +253,10 @@ void wifiBegin() {
   // Configura IP para acesso (IP: 192.168.4.1)
   IPAddress myIP = WiFi.softAPIP();
   
-  // Configura Servidor
+  // Configura rotas
   server.on("/", handleRoot);
-  server.on("/main", handleRoot);
-  server.on("/time", handleTime);
-  server.on("/config" , handleConfig);
-  server.on("/clock", handleClock);
-  server.on("/del", handleDel);
+  server.on("/config", handleTime);
+  server.on("/configTime" , handleConfig);
 
   // Inicia Servidor
   server.begin();
