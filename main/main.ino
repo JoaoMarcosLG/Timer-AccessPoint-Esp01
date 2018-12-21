@@ -60,7 +60,7 @@ bool button_curr, button_prev;
 const char *ssid = "Timer";
 const char *password = "";
 
-ESP8266WebServer server(80);
+ESP8266WebServer server(80);  // Define porta 
 
 // --- Estrutura dos horarios de acionamento ---
 struct Hour {
@@ -124,7 +124,8 @@ void setup() {
   pinMode(relay, OUTPUT);
 
   // Desabilita AccessPoint
-  wifiSleep();
+  wifiBegin(); //wifiSleep();
+  wifi_status = true;
 
   // Configura pinos de comunicacao com o relogio
   Wire.pins(0,2);
@@ -250,7 +251,7 @@ void wifiBegin() {
   // Inicia AccessPoint
   WiFi.softAP(ssid, password);
 
-  // Configura IP para acesso (IP: 192.168.4.1)
+  // Obtem IP para acesso (IP: 192.168.4.1)
   IPAddress myIP = WiFi.softAPIP();
   
   // Configura rotas
@@ -308,7 +309,7 @@ void handleTime() {
   }
 
   info += String("Tempo acionado: ") + String(time_on.hour) + String(":") + String(time_on.minute) + String(":") + String(time_on.second) + String("<br/>");
-
+  
   html.replace("{{ info }}", info);
 
   // Manda a pagina para o usuario
@@ -346,10 +347,10 @@ void handleConfig() {
     }
 
     times_count = j;  // Atualiza numero de horarios
+    
+    EEPROM_write();  // Salva alteracoes na EEPROM
+  }
 
-      EEPROM_write();  // Salva alteracoes na EEPROM
-    }
-  
   // Manda a pagina para o usuario
   server.send(200, "text/html", html);
 }
