@@ -317,7 +317,7 @@ void handleTime() {
 
 void handleConfig() {
   // Variavel que contem o codigo html
-  String html = "";
+  String html = "<!doctype html> <html lang=\"pt-br\"> <head> <title>Timer</title> <meta charset=\"utf-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"> <style>.flex-container{display:flex;flex-direction:column;justify-content:center}.center-x{display:block;margin-left:auto;margin-right:auto}.no-margin{margin:0}.time-input{display:flex;flex-direction:row}.time-input input{width:60%;margin:5px!important}.time-input button{margin-top:5px;height:42px;line-height:30px}.btn,h1,h2,h3,h4,h5,h6{font-weight:400;line-height:1.5}.time-input label{margin:auto}.risk{height:2px;border:none;color:#212529;background-color:#212529;margin-top:0}html{background:#f8f8f8;margin-top:64px}div{margin-bottom:12px}input[type=text]{border-radius:8px;font-size:20px;margin-top:12px;margin-bottom:18px;height:36px;padding-left:10px}h1,h2,h3,h4,h5,h6{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,Oxygen,Ubuntu,Cantarell,\"Open Sans\",\"Helvetica Neue\",sans-serif;color:#212529;margin:0}h1{font-size:70px}h3{font-size:40px}h5{font-size:20px}.btn{display:inline-block;text-align:center;white-space:nowrap;vertical-align:middle;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;border:1px solid transparent;padding:.375rem .75rem;font-size:1.6rem;border-radius:.25rem;transition:color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out}.btn.focus,.btn:focus{outline:0;box-shadow:0 0 0 .2rem rgba(0,123,255,.25)}.btn-primary{color:#fff;background-color:#007bff;border-color:#007bff}.btn-primary:hover{color:#fff;background-color:#0069d9;border-color:#0062cc}.btn-success{color:#fff;background-color:#28a745;border-color:#28a745}.btn-success:hover{color:#fff;background-color:#218838;border-color:#1e7e34}.btn-danger{color:#fff;background-color:#dc3545;border-color:#dc3545}.btn-danger:hover{color:#fff;background-color:#c82333;border-color:#bd2130}.btn-secondary{color:#fff;background-color:#6c757d;border-color:#6c757d}.btn-secondary:hover{color:#fff;background-color:#5a6268;border-color:#545b62}</style> </head> <body> <div class=\"flex-container\"> <h3 class=\"center-x\">Horários</h3> <div class=\"risk\"></div> <form id=\"test\"> <div id=\"times-container\"> <div class=\"time-input\"> <label>Horário 1:</label> <input name=\"h1\" type=\"text\" placeholder=\"00:00\" autocomplete=\"off\" maxlength=\"5\" onkeyup=\"check_time(this, 1)\" required> <button type=\"button\" class=\"btn btn-success\" onclick=\"add_cell()\">+</button> </div> </div> <div class=\"time-input\"> <label>Tempo ligado:</label> <input name=\"lig\" type=\"text\" placeholder=\"00:00:00\" autocomplete=\"off\" maxlength=\"8\" onkeyup=\"check_time(this, 2)\" required> </div> <div class=\"center-x\" style=\"padding-bottom: 14px\"> <button type=\"button\" class=\"btn btn-secondary\" style=\"width: 49%\" onclick=\"window.location.replace('config.html')\">Cancelar</button> <button type=\"submit\" class=\"btn btn-success\" style=\"width: 49%\">Salvar</button> </div> </form> </div> </body> <script>var previous_length={};function check_time(element,repeat){id=element.name;if(!(id in previous_length)){previous_length[id]=0}for(let i=0;i<repeat;i++){if(element.value.length==((3*i)+2)&&element.value.length>previous_length[id]){element.value+=':'}}previous_length[id]=element.value.length}var time_count=1;function add_cell(){let new_cell=document.createElement('div');new_cell.className='time-input';new_cell.innerHTML=`<label>Horário ${++time_count}:</label><input name=\"h${time_count}\" type=\"text\" placeholder=\"00:00\" autocomplete=\"off\" maxlength=\"5\" onkeyup=\"check_time(this, 1)\" required><button type=\"button\" class=\"btn btn-success\" style=\"height: 42px\" onclick=\"add_cell()\">+</button>`;document.getElementById('times-container').appendChild(new_cell);let previous_button=new_cell.previousElementSibling.getElementsByTagName('button')[0];previous_button.className='btn btn-danger';previous_button.innerHTML='x';previous_button.onclick=function(){remove_cell(previous_button)}}function remove_cell(element){let times_container=document.getElementById('times-container');times_container.removeChild(element.parentNode);let count=0;for(let i=0;i<times_container.children.length;i++){times_container.children[i].firstChild.innerText=`Horário ${++count}:`}time_count=count}function sync_clk(){let time=new Date();let http=new XMLHttpRequest();http.open('GET',`http://192.168.4.1?hours=${time.getHours()}&minutes=${time.getMinutes()}&seconds=${time.getSeconds()}`);http.send()}</script> </html>";
 
   // Se foram enviados argumentos... Trata-os
   if(server.args() > 0) {
@@ -328,7 +328,7 @@ void handleConfig() {
       // Se for o argumento referente ao tempo ligado...
       if(server.argName(i) == "lig") {
         // Se contem um valor de horario...
-        if(server.arg(i).length() > 0) { // Configura tempo ligado
+        if(server.arg(i).length() == 8) { // Configura tempo ligado
           time_on.set(server.arg(i).substring(0, 2).toInt(), 
                       server.arg(i).substring(3, 5).toInt(),
                       server.arg(i).substring(6, 8).toInt());
@@ -337,7 +337,7 @@ void handleConfig() {
       // Senao, e referente aos horarios de ativacao...
       else {
         // Se contem valor de horario...
-        if(server.arg(i).length() > 0) {  // Configura horarios
+        if(server.arg(i).length() == 5) {  // Configura horarios
           times[j].set(server.arg(i).substring(0, 2).toInt(), 
                        server.arg(i).substring(3, 5).toInt());
           j++;
@@ -347,105 +347,8 @@ void handleConfig() {
 
     times_count = j;  // Atualiza numero de horarios
 
-    // Validacao de horarios cadastrados
-    bool success = true;
-    
-    if(times_count > 0) {  // Se ha pelo menos um horario cadastrado...
-      for(int i=0; i<times_count; i++) {  // Repete a quantidade de horarios cadastrados...
-        if(times[i].cmp(0, 0)) {  // Se algum igual a 00:00 (horario padrao)...
-          success = false;  // Retorna falso
-        }
-      }
-
-      if(time_on.cmp(0, 0, 0)) {  // Se tempo ligado igual a 00:00:00...
-        success = false;  // Retorna falso
-      }
-    } 
-    else {  // Se nenhum horario cadastrado...
-      success = false;  // retorna falso
-    }
-    
-  
-    // Se cadastro validado...
-    if(success) {  // Retorna pagina de confirmacao de configuracao
-      html = "<!DOCTYPE html> <html lang=\"en\"> <head> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Success</title> <style type=\"text/css\"> html { font-family: 'Roboto', sans-serif; } h1 { background-color: #dee3e6; color: #315e8a; font-weight: 500; padding: 10px; } .botao { background-color: #dee3e6; color: #315e8a; padding: 5px 50px; border: 2px solid #315e8a; font-size: 20px; font-weight: 600; text-decoration: none; margin-top: 15px; } </style> </head> <body> <center> <h1>Configurado</h1> <p>Horarios cadastrados: <!--times_count--></p> <!--times--> <p>Tempo ligado: <!--time_on--></p> <a href=\"main\" class=\"botao\">Inicio</a> </center> </body> </html>";
-      
-      html.replace("<!--times_count-->", String(times_count));
-
-      String buf = "";
-      for(int i=0; i<times_count; i++) {
-        buf += String("<p>");
-        buf += String("Horario ") + String(i) + String(" -> ");
-        buf += String(times[i].hour) + String(":") + String(times[i].minute);
-        buf += String("\n");
-        buf += String("</p>");
-      }
-      html.replace("<!--times-->", buf);
-
-      buf = String(time_on.hour) + String(":") + String(time_on.minute) + String(":") + String(time_on.second);
-      html.replace("<!--time_on-->", buf);
-
       EEPROM_write();  // Salva alteracoes na EEPROM
     }
-    else {  // Se houve erro no cadastro...
-      html = "<!DOCTYPE html> <html lang=\"en\"> <head> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Fail</title> <style type=\"text/css\"> html { font-family: 'Roboto', sans-serif; } h1 { background-color: #dee3e6; color: #800000; font-weight: 500; padding: 10px; } .botao { background-color: #dee3e6; color: #315e8a; padding: 5px 50px; border: 2px solid #315e8a; font-size: 20px; font-weight: 600; text-decoration: none; margin-top: 15px; } </style> </head> <body> <center> <h1>Falha na Configuracao</h1> <a href=\"main\" class=\"botao\">Inicio</a> </center> </body> </html>";
-    }
-  }
-  
-  // Se pagina html vazia, utiliza a pagina de configuracao
-  if(html == "")
-    html = "<!DOCTYPE html> <html> <head> <title>Config</title> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <style type=\"text/css\"> html { font-family: 'Roboto', sans-serif; } h1 { background-color: #dee3e6; color: #315e8a; font-weight: 500; padding: 10px; } .botao { background-color: #dee3e6; color: #315e8a; padding: 5px 50px; border-width: 2px; border-radius: 2px; border-color: #315e8a; font-size: 20px; font-weight: 600; text-decoration: none; margin-top: 15px; } </style> </head> <body> <center> <h1>Timer - Config</h1> <form method=\"get\"> <table> <tr> <td><label>Horario 1:</label></td> <td><input type=\"text\" name=\"h1\" placeholder=\"00:00\"></td> </tr> <tr> <td><label>Horario 2:</label></td> <td><input type=\"text\" name=\"h2\" placeholder=\"00:00\"></td> </tr> <tr> <td><label>Horario 3:</label></td> <td><input type=\"text\" name=\"h3\" placeholder=\"00:00\"></td> </tr> <tr> <td><label>Horario 4:</label></td> <td><input type=\"text\" name=\"h4\" placeholder=\"00:00\"></td> </tr> <tr> <td><label>Horario 5:</label></td> <td><input type=\"text\" name=\"h5\" placeholder=\"00:00\"></td> </tr> <tr></tr> <tr> <td><label>Tempo Ligado:</label></td> <td><input type=\"text\" name=\"lig\" placeholder=\"00:00:00\"></td> </tr> </table> <input class=\"botao\" type=\"submit\" value=\"Enviar\"> </form> </center> </body> </html>";
-
-  // Manda a pagina para o usuario
-  server.send(200, "text/html", html);
-}
-
-void handleClock() {
-  // Pagina de configuracao do relogio
-  String html = "";
-  
-  // Verifica se existe algum argumento
-  if(server.args() > 0) {
-    // Repete a quantidade de argumentos enviados
-    for(int i=0; i<server.args(); i++) {
-      // Verifica se botao pressionado
-      if(server.argName(i) == "button") {  // Retorna pagina de configuracao de horario
-        html = "<!DOCTYPE html> <html> <head> <title>Relogio</title> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <style type=\"text/css\"> html { font-family: 'Roboto', sans-serif; } h1 { background-color: #dee3e6; color: #315e8a; font-weight: 500; padding: 10px; } .botao { background-color: #dee3e6; color: #315e8a; padding: 5px 50px; border: 2px solid #315e8a; font-size: 20px; font-weight: 600; text-decoration: none; margin-top: 15px; } </style> </head> <body> <center> <h1>Relogio</h1> <form method=\"get\"> <table> <tr><td><b><label>Configurar:</label></b></td></tr> <tr> <td><label>Horas:</label></td> <td><input type=\"text\" name=\"hour\" maxlength=\"2\"></td> </tr> <tr> <td><label>Minutos:</label></td> <td><input type=\"text\" name=\"minute\" maxlength=\"2\"></td> </tr> </table> <input class=\"botao\" type=\"submit\" value=\"Enviar\"> </form> </center> </body> </html>";
-      } 
-      else {
-        static byte hora, minuto;
-        bool upd = true;
-
-        // Configura relogio
-        if(server.argName(i) == "hour")
-          if(server.arg(i).toInt() != hora)
-            hora = server.arg(i).toInt();
-          else  // Se hora programada for igual horario ja programado...
-            upd = false;  // Nao atualiza horario
-        else if(server.argName(i) == "minute")
-          if(server.arg(i).toInt() != minuto)
-            minuto = server.arg(i).toInt();
-          else  // Se minuto programada for igual horario ja programado...
-            upd = false;  // Nao atualiza horario
-        
-        if(upd)  // Se atualiza display igual a true...
-          rtc.adjust(DateTime(0, 0, 0, hora, minuto, 0));  // Atualiza horario
-      }
-    }
-  }
-
-
-  // Se pagina vazia, utiliza a pagina de exibicao do horarios
-  if(html == "") {
-    html = "<!DOCTYPE html> <html> <head> <title>Relogio</title> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <meta http-equiv=\"refresh\" content=\"1\"> <style type=\"text/css\"> html { font-family: 'Roboto', sans-serif; } h1 { background-color: #dee3e6; color: #315e8a; font-weight: 500; padding: 10px; } .botao { background-color: #dee3e6; color: #315e8a; padding: 5px 50px; border: 2px solid #315e8a; font-size: 20px; font-weight: 600; text-decoration: none; margin-top: 15px; } </style> </head> <body> <center> <h1>Relogio</h1> <h2><!--hour-->:<!--minute-->:<!--second--></h2> <form><input class=\"botao\" type=\"submit\" value=\"Configurar\" name=\"button\"></form> <br/> <a class=\"botao\" href=\"main\">Inicio</a> </center> </body> </html>";
-    
-    DateTime now = rtc.now();  // Variavel que armazena o horario atual
-  
-    html.replace("<!--hour-->", (String)now.hour());
-    html.replace("<!--minute-->", (String)now.minute());
-    html.replace("<!--second-->", (String)now.second());
-  }
-  
   
   // Manda a pagina para o usuario
   server.send(200, "text/html", html);
