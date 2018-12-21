@@ -34,3 +34,7 @@ function remove_cell(element) {
     }
     time_count = count;
 }
+
+function sync_clk() {
+    
+}
