@@ -38,9 +38,11 @@
 #include <RTClib.h>
 
 // Constantes do projeto
-#define TIME_ON_HOUR   23
-#define TIME_ON_MINUTE 24
-#define TIME_ON_SECOND 25
+#define TIMES_COUNT    1
+#define TIME_ON_HOUR   2
+#define TIME_ON_MINUTE 3
+#define TIME_ON_SECOND 4
+#define TIMES_F1_LOCAT 5
 
 // Mapeamento de HardWare
 #define button 1
@@ -193,9 +195,9 @@ void buttonRead() {
 void EEPROM_write() {  
   EEPROM.begin(512);  // Inicia EEPROM com 512 bytes
 
-  EEPROM.write(0, times_count);
+  EEPROM.write(TIMES_COUNT, times_count);
 
-  byte j = 1;
+  byte j = TIMES_F1_LOCAT;
   for(int i=0; i<times_count; i++) {
     EEPROM.write(j, times[i].hour);
     EEPROM.write(j + 1, times[i].minute);
@@ -212,9 +214,9 @@ void EEPROM_write() {
 void EEPROM_read() {
   EEPROM.begin(512);  // Inicia EEPROM com 512 bytes
 
-  times_count = EEPROM.read(0);
+  times_count = EEPROM.read(TIMES_COUNT);
 
-  byte j = 1;
+  byte j = TIMES_F1_LOCAT;
   for(int i=0; i<times_count; i++) {
     times[i].set(EEPROM.read(j), EEPROM.read(j+1));
     j+=2;
