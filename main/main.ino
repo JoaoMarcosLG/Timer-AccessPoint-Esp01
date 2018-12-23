@@ -132,6 +132,12 @@ typedef struct Time {
       return (times_str[0] + ':' + times_str[1]); 
     }
   }
+} Time; 
+
+// Variaveis do tipo Time
+Time *times;
+Time time_on;
+
 byte times_count = 0;  // Variavel que armazena qnt de horarios programados
 
 bool timer_mode = 0;  // Modo: (default) 0 -> horários; 1 -> intervalo
@@ -239,6 +245,7 @@ void EEPROM_write() {
 
   EEPROM.write(TIMER_MODE, timer_mode);
 
+  byte j = TIMES_ADDR_INI;
   for(int i=0; i<times_count; i++) {
     EEPROM.write(j, times[i].hour);
     EEPROM.write(j + 1, times[i].minute);
@@ -259,6 +266,10 @@ void EEPROM_read() {
 
   timer_mode = EEPROM.read(TIMER_MODE);
 
+  times = (Time*)malloc(times_count * sizeof(Time));
+
+  byte j = TIMES_ADDR_INI;
+  for(byte i=0; i<times_count; i++) {
     times[i].set(EEPROM.read(j), EEPROM.read(j+1));
     j+=2;
   }
