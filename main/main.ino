@@ -341,9 +341,10 @@ void handleRoot() {
   }
 
   // Pega horário atual do RTC e adiciona à página
+  Time clk;
   DateTime now = rtc.now();
-  String clock = String(now.hour()) + String(':') + String(now.minute()) + String(':') + String(now.second()); 
-  html.replace("{{ clock }}", clock);
+  clk.set(now.hour(), now.minute(), now.second());
+  html.replace("{{ clock }}", clk.toStr());
 
   // Manda página para browser
   server.send(200, "text/html", html);
@@ -357,15 +358,17 @@ void handleTime() {
   // Exibe o modo de funcionamento
   html.replace("{{ mode }}", (timer_mode ? "Intervalo" : "Horários"));
 
+  // Monta html para exibição de informações cadatradas
+  String info = "";
   info += String("Horários cadastrados: ") + String(times_count) + String("<br/>");
 
   for(int i=0; i<times_count; i++) {
-    info += String("Horario ") + String(i) + String(" -> ");
-    info += String(times[i].hour) + String(":") + String(times[i].minute);
+    info += String(i) + String(". ");
+    info += times[i].toStr(false);
     info += String("<br/>");
   }
 
-  info += String("Tempo acionado: ") + String(time_on.hour) + String(":") + String(time_on.minute) + String(":") + String(time_on.second) + String("<br/>");
+  info += String("Tempo acionado: ") + time_on.toStr() + String("<br/>");
   
   html.replace("{{ info }}", info);
 
@@ -396,6 +399,7 @@ void handleConfig() {
       else {
         // Se contem valor de horario...
         if(server.arg(i).length() == 5) {  // Configura horarios
+          times = (!j) ? (Time*)malloc((j + 1) * sizeof(Time)) : (Time*)realloc(times, (j + 1) * sizeof(Time));
           times[j].set(server.arg(i).substring(0, 2).toInt(), 
                        server.arg(i).substring(3, 5).toInt());
           j++;
