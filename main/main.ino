@@ -64,7 +64,7 @@ const char *password = "";
 ESP8266WebServer server(80);  // Define porta 
 
 // --- Estrutura dos horarios de acionamento ---
-struct Hour {
+typedef struct Time {
   byte hour = 0;
   byte minute = 0;
   byte second = 0;
@@ -89,11 +89,49 @@ struct Hour {
       return false;
   }
 
+  bool cmp(Time other) {
+    if(hour == other.hour && minute == other.minute && second == other.second)
+      return true;
+    else
+      return false;
+  }
+
+  bool isBiggest(Time other) {
+    if(hour != other.hour) {
+      return (hour > other.hour ? true : false);
+    } else {
+      if(minute != other.minute) {
+        return (minute > other.minute ? true : false);
+      } else {
+        if(second != other.second) {
+          return (second > other.second ? true : false);
+        } else {
+          return false;
+        }
+      }
+    }
+  }
+
   unsigned long toSeconds() {
     return ((hour * 3600) + (minute * 60) + second);
   }
-} times[5], time_on;
 
+  String toStr(bool seconds = true) {
+    String times_str[] = {String(hour), String(minute), String(second)};
+
+    for(int i=0; i<3; i++) {
+      // Adiciona zeros se preciso (9:5 -> 09:05)
+      if(times_str[i].length() < 2) {
+        times_str[i] = '0' + times_str[i];
+      }
+    }
+    
+    if(seconds) {
+      return (times_str[0] + ':' + times_str[1] + ':' + times_str[2]); 
+    } else {
+      return (times_str[0] + ':' + times_str[1]); 
+    }
+  }
 byte times_count = 0;  // Variavel que armazena qnt de horarios programados
 
 bool timer_mode = 0;  // Modo: (default) 0 -> horários; 1 -> intervalo
