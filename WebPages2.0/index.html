@@ -25,9 +25,10 @@
             <form class="center-x" onsubmit="sync_clk(this)">
                 <div>
                     <button type="submit" class="btn btn-secondary" style="width: 90vw">Sincronizar relógio</button>
-            </div>
+                </div>
             </form>
         </div>
     </body>
     <script src="script.js"></script>
+    <script>window.onload = function () { verify_request('/'); };</script>
 </html>

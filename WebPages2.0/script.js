@@ -59,5 +59,9 @@ function sync_clk(form) {
     input_seconds.hidden = true;
     form.appendChild(input_seconds);
 }
-    
+ 
+function verify_request(new_url) {
+    if(location.search != '') {
+        window.location.replace(new_url);
+    }
 }
