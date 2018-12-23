@@ -433,30 +433,6 @@ void handleConfig() {
   // Limpa variável de armazenamento do ultimo horário de acionamento
   last_time = 255;
 
-void handleDel() {
-  String html = "<!DOCTYPE html> <html lang=\"en\"> <head> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Delete</title> <style type=\"text/css\"> html { font-family: 'Roboto', sans-serif; } h1 { background-color: #dee3e6; color: #800000; font-weight: 500; padding: 10px; } .botao { background-color: #800000; color: white; padding: 5px 50px; border: 2px solid black; font-size: 20px; font-weight: 600; text-decoration: none; margin-top: 15px; } </style> </head> <body> <center> <h1>Apagar horarios</h1> <form method=\"get\"> <label><b>Deseja mesmo apagar os horarios cadastrados?</b></label><br/> <input class=\"botao\" type=\"submit\" name=\"button\" value=\"Apagar\"> </form> </center> </body> </html>";
-
-  // Verifica se existe algum argumento
-  if(server.args() > 0) {
-    // Percorre todos os argumentos
-    for(int i=0; i<server.args(); i++) {
-      // Se argumento for "button"
-      if(server.argName(i) == "button") {
-        // Percorre todos os horarios cadastrados
-        for(int j=0; j<times_count; j++) {
-          times[j].set(0, 0);  // Limpa horario
-        }
-
-        time_on.set(0, 0, 0);  // Limpa tempo ligado
-        
-        times_count = 0;  // Limpa quantidade de horarios cadastrados
-      }
-    }
-
-    // Retorna pagina de confirmacao
-    html = "<!DOCTYPE html> <html lang=\"en\"> <head> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Delete</title> <style type=\"text/css\"> html { font-family: 'Roboto', sans-serif; } h1 { background-color: #dee3e6; color: #800000; font-weight: 500; padding: 10px; } .botao { background-color: #dee3e6; color: #315e8a; padding: 5px 50px; border: 2px solid #315e8a; font-size: 20px; font-weight: 600; text-decoration: none; margin-top: 15px; } </style> </head> <body> <center> <h1>Apagar horarios</h1> <label><b>Horarios apagados com sucesso.</b></label><br/><br/> <a href=\"main\" class=\"botao\">Inicio</a> </center> </body> </html>";
-  }
-  
   // Manda a pagina para o usuario
   server.send(200, "text/html", html);
 }
