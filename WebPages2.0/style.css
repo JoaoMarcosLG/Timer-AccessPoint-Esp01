@@ -42,10 +42,10 @@
 
 html {
     background: rgb(248, 248, 248);
-    margin-top: 64px;
+    margin-top: 24px;
 }
 
-div {
+div, form {
     margin-bottom: 12px;
 }
 
