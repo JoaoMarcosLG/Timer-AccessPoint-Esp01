@@ -39,10 +39,11 @@
 
 // Constantes do projeto
 #define TIMES_COUNT    1
-#define TIME_ON_HOUR   2
-#define TIME_ON_MINUTE 3
-#define TIME_ON_SECOND 4
-#define TIMES_F1_LOCAT 5
+#define TIMER_MODE     2
+#define TIME_ON_HOUR   3
+#define TIME_ON_MINUTE 4
+#define TIME_ON_SECOND 5
+#define TIMES_ADDR_INI 6
 
 // Mapeamento de HardWare
 #define button 1
@@ -94,6 +95,8 @@ struct Hour {
 } times[5], time_on;
 
 byte times_count = 0;  // Variavel que armazena qnt de horarios programados
+
+bool timer_mode = 0;  // Modo: (default) 0 -> horários; 1 -> intervalo
 
 byte last_time = 255;  // Variavel que armazena ultimo horario acionado
 
@@ -196,7 +199,8 @@ void EEPROM_write() {
 
   EEPROM.write(TIMES_COUNT, times_count);
 
-  byte j = TIMES_F1_LOCAT;
+  EEPROM.write(TIMER_MODE, timer_mode);
+
   for(int i=0; i<times_count; i++) {
     EEPROM.write(j, times[i].hour);
     EEPROM.write(j + 1, times[i].minute);
@@ -215,8 +219,8 @@ void EEPROM_read() {
 
   times_count = EEPROM.read(TIMES_COUNT);
 
-  byte j = TIMES_F1_LOCAT;
-  for(int i=0; i<times_count; i++) {
+  timer_mode = EEPROM.read(TIMER_MODE);
+
     times[i].set(EEPROM.read(j), EEPROM.read(j+1));
     j+=2;
   }
@@ -299,6 +303,10 @@ void handleRoot() {
 void handleTime() {
   String html ="<!doctype html> <html lang=\"pt-br\"> <head> <title>Timer</title> <meta charset=\"utf-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"> <style>.flex-container{display:flex;flex-direction:column;justify-content:center}.center-x{display:block;margin-left:auto;margin-right:auto}.no-margin{margin:0}.time-input{display:flex;flex-direction:row}.time-input input{width:60%;margin:5px!important}.time-input button{margin-top:5px;height:42px;line-height:30px}.btn,h1,h2,h3,h4,h5,h6{font-weight:400;line-height:1.5}.time-input label{margin:auto}.risk{height:2px;border:none;color:#212529;background-color:#212529;margin-top:0}html{background:#f8f8f8;margin-top:64px}div{margin-bottom:12px}input[type=text]{border-radius:8px;font-size:20px;margin-top:12px;margin-bottom:18px;height:36px;padding-left:10px}h1,h2,h3,h4,h5,h6{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,Oxygen,Ubuntu,Cantarell,\"Open Sans\",\"Helvetica Neue\",sans-serif;color:#212529;margin:0}h1{font-size:70px}h3{font-size:40px}h5{font-size:20px}.btn{display:inline-block;text-align:center;white-space:nowrap;vertical-align:middle;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;border:1px solid transparent;padding:.375rem .75rem;font-size:1.6rem;border-radius:.25rem;transition:color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out}.btn.focus,.btn:focus{outline:0;box-shadow:0 0 0 .2rem rgba(0,123,255,.25)}.btn-primary{color:#fff;background-color:#007bff;border-color:#007bff}.btn-primary:hover{color:#fff;background-color:#0069d9;border-color:#0062cc}.btn-success{color:#fff;background-color:#28a745;border-color:#28a745}.btn-success:hover{color:#fff;background-color:#218838;border-color:#1e7e34}.btn-danger{color:#fff;background-color:#dc3545;border-color:#dc3545}.btn-danger:hover{color:#fff;background-color:#c82333;border-color:#bd2130}.btn-secondary{color:#fff;background-color:#6c757d;border-color:#6c757d}.btn-secondary:hover{color:#fff;background-color:#5a6268;border-color:#545b62}</style> </head> <body> <div class=\"flex-container\"> <h3 class=\"center-x\">Configurações</h3> <div class=\"risk\"></div> <h5 class=\"center-x\">Modo: {{ mode }}</h5> <h5 class=\"center-x\">{{ info }}</h5> <div class=\"center-x\" style=\"margin-top: 12px\"> <button class=\"btn btn-secondary\" style=\"width: 90vw\" onclick=\"window.location.replace('configTime.html')\">Configurar</button> </div> <div class=\"center-x\"> <button class=\"btn btn-primary\" style=\"width: 90vw\" onclick=\"window.location.replace('index.html')\">Inicio</button> </div> </div> </body> <script>var previous_length={};function check_time(element,repeat){id=element.name;if(!(id in previous_length)){previous_length[id]=0}for(let i=0;i<repeat;i++){if(element.value.length==((3*i)+2)&&element.value.length>previous_length[id]){element.value+=':'}}previous_length[id]=element.value.length}var time_count=1;function add_cell(){let new_cell=document.createElement('div');new_cell.className='time-input';new_cell.innerHTML=`<label>Horário ${++time_count}:</label><input name=\"h${time_count}\" type=\"text\" placeholder=\"00:00\" autocomplete=\"off\" maxlength=\"5\" onkeyup=\"check_time(this, 1)\" required><button type=\"button\" class=\"btn btn-success\" style=\"height: 42px\" onclick=\"add_cell()\">+</button>`;document.getElementById('times-container').appendChild(new_cell);let previous_button=new_cell.previousElementSibling.getElementsByTagName('button')[0];previous_button.className='btn btn-danger';previous_button.innerHTML='x';previous_button.onclick=function(){remove_cell(previous_button)}}function remove_cell(element){let times_container=document.getElementById('times-container');times_container.removeChild(element.parentNode);let count=0;for(let i=0;i<times_container.children.length;i++){times_container.children[i].firstChild.innerText=`Horário ${++count}:`}time_count=count}function sync_clk(){let time=new Date();let http=new XMLHttpRequest();http.open('GET',`http://192.168.4.1?hours=${time.getHours()}&minutes=${time.getMinutes()}&seconds=${time.getSeconds()}`);http.send()}</script> </html>";
   String info = "";
+
+
+  // Exibe o modo de funcionamento
+  html.replace("{{ mode }}", (timer_mode ? "Intervalo" : "Horários"));
 
   info += String("Horários cadastrados: ") + String(times_count) + String("<br/>");
 
