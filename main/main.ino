@@ -153,6 +153,7 @@ void EEPROM_write();  // Funcao para salvar informacoes na memoria EEPROM
 void EEPROM_read();   // Funcao para ler informacoes na memoria EEPROM
 
 bool timesCheck();    // Funcao que confere se esta no horario de acionar saida
+void timeSort();      // Funcao para ordenar horarios
 
 void wifiBegin();     // Funcao que liga AccessPoint
 void wifiSleep();     // Funcao que desliga AccessPoint
@@ -297,6 +298,23 @@ bool timesCheck() {
   return false;  // Caso nenhum horario "bata", retorna 'false'
 }
 
+void timeSort() {
+  // Compara e ordena horarios (Crescente)
+  for(byte i=0; i<times_count-1; i++) {
+    byte small = i;
+    for(byte j=i+1; j<times_count; j++) {
+      if(times[small].isBiggest(times[j])) {
+        small = j;
+      }
+    }
+    if(!times[i].cmp(times[small])) {
+      Time buff = times[i];
+      times[i] = times[small];
+      times[small] = buff;
+    }
+  }
+}
+
 void wifiBegin() {
   WiFi.forceSleepWake();  // Forca re-ligamento do WIFI
   delay(10);              // Delay para estabilizacao
@@ -408,13 +426,12 @@ void handleConfig() {
     }
 
     times_count = j;  // Atualiza numero de horarios
-    
+    timeSort();  // Ordena horarios
     EEPROM_write();  // Salva alteracoes na EEPROM
   }
 
-  // Manda a pagina para o usuario
-  server.send(200, "text/html", html);
-}
+  // Limpa variável de armazenamento do ultimo horário de acionamento
+  last_time = 255;
 
 void handleDel() {
   String html = "<!DOCTYPE html> <html lang=\"en\"> <head> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Delete</title> <style type=\"text/css\"> html { font-family: 'Roboto', sans-serif; } h1 { background-color: #dee3e6; color: #800000; font-weight: 500; padding: 10px; } .botao { background-color: #800000; color: white; padding: 5px 50px; border: 2px solid black; font-size: 20px; font-weight: 600; text-decoration: none; margin-top: 15px; } </style> </head> <body> <center> <h1>Apagar horarios</h1> <form method=\"get\"> <label><b>Deseja mesmo apagar os horarios cadastrados?</b></label><br/> <input class=\"botao\" type=\"submit\" name=\"button\" value=\"Apagar\"> </form> </center> </body> </html>";
