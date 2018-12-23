@@ -35,6 +35,29 @@ function remove_cell(element) {
     time_count = count;
 }
 
-function sync_clk() {
+function sync_clk(form) {
+    let date = new Date();
+
+    let input_hours = document.createElement('input');
+    input_hours.type = 'text';
+    input_hours.name = 'hours';
+    input_hours.value = date.getHours();
+    input_hours.hidden = true;
+    form.appendChild(input_hours);
+
+    let input_minutes = document.createElement('input');
+    input_minutes.type = 'text';
+    input_minutes.name = 'minutes';
+    input_minutes.value = date.getMinutes();
+    input_minutes.hidden = true;
+    form.appendChild(input_minutes);
+
+    let input_seconds = document.createElement('input');
+    input_seconds.type = 'text';
+    input_seconds.name = 'seconds';
+    input_seconds.value = date.getSeconds();
+    input_seconds.hidden = true;
+    form.appendChild(input_seconds);
+}
     
 }

@@ -22,9 +22,11 @@
             <div class="center-x" style="margin-top: 12px">
                 <button class="btn btn-primary" style="width: 90vw; height: 100px" onclick="window.location.replace('config.html')">Configurações</button>
             </div>
-            <div class="center-x">
-                <button class="btn btn-secondary" style="width: 90vw" onclick="sync_clk()">Sincronizar relógio</button>
+            <form class="center-x" onsubmit="sync_clk(this)">
+                <div>
+                    <button type="submit" class="btn btn-secondary" style="width: 90vw">Sincronizar relógio</button>
             </div>
+            </form>
         </div>
     </body>
     <script src="script.js"></script>
