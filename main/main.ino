@@ -154,6 +154,7 @@ void EEPROM_read();   // Funcao para ler informacoes na memoria EEPROM
 
 bool timesCheck();    // Funcao que confere se esta no horario de acionar saida
 void timeSort();      // Funcao para ordenar horarios
+Time nextTime();      // Funcao que retorna proximo horario de acionamento
 
 void wifiBegin();     // Funcao que liga AccessPoint
 void wifiSleep();     // Funcao que desliga AccessPoint
@@ -315,6 +316,17 @@ void timeSort() {
   }
 }
 
+Time nextTime() {
+  // Se modo 'horarios'
+  if(!timer_mode) {
+    if(last_time == 255 || last_time == times_count) {
+      return times[0];
+    } else {
+      return times[last_time+1];
+    }
+  }
+}
+
 void wifiBegin() {
   WiFi.forceSleepWake();  // Forca re-ligamento do WIFI
   delay(10);              // Delay para estabilizacao
@@ -364,6 +376,9 @@ void handleRoot() {
   clk.set(now.hour(), now.minute(), now.second());
   html.replace("{{ clock }}", clk.toStr());
 
+  // Verifica proximo horario de acionamento e adiciona na pagina
+  html.replace("{{ time }}", nextTime().toStr(false));
+
   // Manda página para browser
   server.send(200, "text/html", html);
 }
@@ -377,6 +392,7 @@ void handleTime() {
       if(server.argName(i) == "del") {
         times_count = 0;
         time_on.set(0, 0, 0);
+        last_time = 255;
         free(times);
         EEPROM_write();
       }
@@ -391,7 +407,7 @@ void handleTime() {
   info += String("Horários cadastrados: ") + String(times_count) + String("<br/>");
 
   for(int i=0; i<times_count; i++) {
-    info += String(i) + String(". ");
+    info += String(i+1) + String(". ");
     info += times[i].toStr(false);
     info += String("<br/>");
   }
