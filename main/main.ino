@@ -333,7 +333,7 @@ void timeSort() {
 Time nextTime() {
   // Se modo 'horarios'
   if(!timer_mode) {
-    if(last_time == 255 || last_time == times_count) {
+    if(last_time == 255 || last_time == times_count - 1) {
       return times[0];
     } else {
       return times[last_time+1];
@@ -391,7 +391,11 @@ void handleRoot() {
   html.replace("{{ clock }}", clk.toStr());
 
   // Verifica proximo horario de acionamento e adiciona na pagina
+  if(!times_count) {
+    html.replace("{{ time }}", "Nenhum");
+  } else {
   html.replace("{{ time }}", nextTime().toStr(false));
+  }
 
   // Manda página para browser
   server.send(200, "text/html", html);
