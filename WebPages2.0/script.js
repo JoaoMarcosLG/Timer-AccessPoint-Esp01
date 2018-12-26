@@ -18,6 +18,7 @@ function add_cell() {
     new_cell.className = 'time-input';
     new_cell.innerHTML = `<label>Horário ${++time_count}:</label><input name="h${time_count}" type="text" placeholder="00:00" autocomplete="off" maxlength="5" onkeyup="check_time(this, 1)" required><button type="button" class="btn btn-success" style="height: 42px" onclick="add_cell()">+</button>`;
     document.getElementById('times-container').appendChild(new_cell);
+    new_cell.getElementsByTagName('input')[0].focus();
     
     let previous_button = new_cell.previousElementSibling.getElementsByTagName('button')[0];
     previous_button.className = 'btn btn-danger';
