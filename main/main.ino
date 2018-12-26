@@ -206,18 +206,20 @@ void loop() {
 
   // Se horarios ja configurados...
   if(times_count > 0) {
-    static unsigned long time_buf;  // Variavel que ira conter o instante de acionamento da saida
+    static Time time_buf, now;  // Variavel que ira conter o instante de desacionamento da saida
+    now.set(rtc.now());
+
     // Se relay desligado...
     if(!relay_status) {
       // Confere se esta no horario de acionar saida
       if(timesCheck()) {
         digitalWrite(relay, HIGH);  // Aciona saida
+        time_buf = now + time_on;  // Armazena horario de desacionamento da saida
         relay_status = true;  // Atualiza Flag de estado do relay
-        time_buf = millis();  // Armazena horario de acionamento da saida
       }
     }
     else { // Senao...
-      if(millis() - time_buf > time_on.toSeconds() * 1000) {
+      if(now > time_buf) {
         digitalWrite(relay, LOW);  // Desaciona saida
         relay_status = false;  // Atualiza Flag de estado do relay
       }
