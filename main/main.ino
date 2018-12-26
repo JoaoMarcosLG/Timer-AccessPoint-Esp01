@@ -427,13 +427,17 @@ void handleTime() {
 
   // Monta html para exibição de informações cadatradas
   String info = "";
+  
   info += String("Horários cadastrados: ") + String(times_count) + String("<br/>");
 
-  for(int i=0; i<times_count; i++) {
-    info += String("<b>") + String(i+1) + String(". ") + times[i].toStr(false) + String("</b><br/>");
-  }
+  if(times_count) {
 
-  info += String("Tempo acionado: ") + time_on.toStr() + String("<br/>");
+    for(int i=0; i<times_count; i++) {
+      info += String("<b>") + String(i+1) + String(". ") + times[i].toStr(false) + String("</b><br/>");
+    }
+
+    info += String("Tempo acionado: ") + time_on.toStr() + String("<br/>");
+  }
   
   html.replace("{{ info }}", info);
 
