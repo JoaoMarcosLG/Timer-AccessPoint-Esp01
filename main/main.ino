@@ -333,11 +333,17 @@ void timeSort() {
 Time nextTime() {
   // Se modo 'horarios'
   if(!timer_mode) {
-    if(last_time == 255 || last_time == times_count - 1) {
-      return times[0];
-    } else {
-      return times[last_time+1];
+    Time now;
+    now.set(rtc.now());
+    // Percorre todos os horarios para verificar proximo horario de acionamento
+    for(int i=0; i<times_count; i++) {
+      if(now > times[i]) {
+        continue;
+      } else {
+        return times[i];
+      }
     }
+    return times[0];  // Se horario atual 'maior' que todos os horarios, entao retorna primeiro horario
   }
 }
 
