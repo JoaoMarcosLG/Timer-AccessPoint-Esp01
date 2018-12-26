@@ -318,11 +318,11 @@ void timeSort() {
   for(byte i=0; i<times_count-1; i++) {
     byte small = i;
     for(byte j=i+1; j<times_count; j++) {
-      if(times[small].isBiggest(times[j])) {
+      if(times[small] > times[j]) {
         small = j;
       }
     }
-    if(!times[i].cmp(times[small])) {
+    if(!(times[i] == times[small])) {
       Time buff = times[i];
       times[i] = times[small];
       times[small] = buff;
@@ -386,15 +386,14 @@ void handleRoot() {
 
   // Pega horário atual do RTC e adiciona à página
   Time clk;
-  DateTime now = rtc.now();
-  clk.set(now.hour(), now.minute(), now.second());
+  clk.set(rtc.now());
   html.replace("{{ clock }}", clk.toStr());
 
   // Verifica proximo horario de acionamento e adiciona na pagina
   if(!times_count) {
     html.replace("{{ time }}", "Nenhum");
   } else {
-  html.replace("{{ time }}", nextTime().toStr(false));
+    html.replace("{{ time }}", nextTime().toStr(false));
   }
 
   // Manda página para browser
@@ -425,9 +424,7 @@ void handleTime() {
   info += String("Horários cadastrados: ") + String(times_count) + String("<br/>");
 
   for(int i=0; i<times_count; i++) {
-    info += String(i+1) + String(". ");
-    info += times[i].toStr(false);
-    info += String("<br/>");
+    info += String("<b>") + String(i+1) + String(". ") + times[i].toStr(false) + String("</b><br/>");
   }
 
   info += String("Tempo acionado: ") + time_on.toStr() + String("<br/>");
@@ -472,10 +469,10 @@ void handleConfig() {
     times_count = j;  // Atualiza numero de horarios
     timeSort();  // Ordena horarios
     EEPROM_write();  // Salva alteracoes na EEPROM
+    
+    // Limpa variável de armazenamento do ultimo horário de acionamento
+    last_time = 255;
   }
-
-  // Limpa variável de armazenamento do ultimo horário de acionamento
-  last_time = 255;
 
   // Manda a pagina para o usuario
   server.send(200, "text/html", html);
