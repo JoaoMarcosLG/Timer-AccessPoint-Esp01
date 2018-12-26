@@ -75,6 +75,12 @@ typedef struct Time {
     second = s;
   }
 
+  void set(DateTime time) {
+    hour = time.hour();
+    minute = time.minute();
+    second = time.second();
+  }
+
   bool cmp(byte h, byte m) {
     if(h == hour && m == minute)
       return true;
@@ -89,14 +95,14 @@ typedef struct Time {
       return false;
   }
 
-  bool cmp(Time other) {
+  bool operator == (const Time& other) {
     if(hour == other.hour && minute == other.minute && second == other.second)
       return true;
     else
       return false;
   }
 
-  bool isBiggest(Time other) {
+  bool operator > (const Time& other) {
     if(hour != other.hour) {
       return (hour > other.hour ? true : false);
     } else {
@@ -110,6 +116,12 @@ typedef struct Time {
         }
       }
     }
+  }
+
+  Time operator + (const Time& other) {
+    Time sum;
+    sum.set(hour + other.hour, minute + other.minute, second + other.second);
+    return sum;
   }
 
   unsigned long toSeconds() {
