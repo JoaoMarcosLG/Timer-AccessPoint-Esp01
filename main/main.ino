@@ -1,7 +1,7 @@
 /*
- *  Timer 2.0
+ *  Timer v2.0
  *  Autor: João Marcos Lana Gomes
- *  Julho - 2018
+ *  Dezembro - 2018
  * 
  *  Mapeamento dos pinos do ESP-01
  *  -      0: SDA - RTC DS3231
@@ -11,21 +11,24 @@
  *  
  *  Mapeamento da EEPROM:
  *  00 -> times_count
+ *  01 -> timer_mode
+ * 
+ *  02 -> time_on.hour
+ *  03 -> time_on.minute
+ *  04 -> time_on.second
+ * 
+ *  05 -> times[0].hour
+ *  06 -> times[0].minute
+ *  07 -> times[1].hour
+ *  08 -> times[1].minute
+ *  09 -> times[2].hour
+ *  10 -> times[2].minute
+ *     .
+ *     .
+ *     .
+ *  xx -> times[x].hour
+ *  xx -> times[x].minute
  *  
- *  01 -> times[0].hour
- *  02 -> times[0].minute
- *  03 -> times[1].hour
- *  04 -> times[1].minute
- *  05 -> times[2].hour
- *  06 -> times[2].minute
- *  07 -> times[3].hour
- *  08 -> times[3].minute
- *  09 -> times[4].hour
- *  10 -> times[4].minute
- *  
- *  11 -> time_on.hour
- *  12 -> time_on.minute
- *  13 -> time_on.second
  */
 
 // --- Bibliotecas ---
