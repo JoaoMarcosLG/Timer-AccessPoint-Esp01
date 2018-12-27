@@ -50,21 +50,17 @@
 
 // Mapeamento de HardWare
 #define button 1
-#define button_lig LOW  // Estado do botao pressionado
+#define button_lig LOW  // Estado do botao pressionado (PULL-UP)
 #define relay 3
 
 // --- Variaveis auxiliares ---
 bool wifi_status = false;
 
-bool relay_status = false;
-
-bool button_curr, button_prev;
-
 // --- Configuracoes da rede ---
 const char *ssid = "Timer";
 const char *password = "";
 
-ESP8266WebServer server(80);  // Define porta 
+ESP8266WebServer server(80);  // Instancia server (porta 80)
 
 // --- Estrutura dos horarios de acionamento ---
 typedef struct Time {
@@ -188,8 +184,7 @@ void setup() {
   pinMode(relay, OUTPUT);
 
   // Desabilita AccessPoint
-  wifiBegin(); //wifiSleep();
-  wifi_status = true;
+  wifiSleep();
 
   // Configura pinos de comunicacao com o relogio
   Wire.pins(0,2);
@@ -204,6 +199,9 @@ void setup() {
 
 // --- LOOP ---
 void loop() {
+  // Variáveis
+  static bool relay_status = false;
+
   // Confere se botao foi pressionado
   buttonRead();
 
@@ -238,6 +236,9 @@ void loop() {
 // --- Desenvolvimento das funcoes ---
 
 void buttonRead() {
+  // Vaiáveis
+  static bool button_curr, button_prev;
+
   // Le o estado do botao
   button_curr = digitalRead(button);
 
