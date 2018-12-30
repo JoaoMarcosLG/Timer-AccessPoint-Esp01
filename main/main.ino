@@ -466,8 +466,9 @@ void handleConfig() {
       // Senao, e referente aos horarios de ativacao...
       else {
         // Se contem valor de horario...
-        if(server.arg(i).length() == 5) {  // Configura horarios
-          times = (!j) ? (Time*)malloc((j + 1) * sizeof(Time)) : (Time*)realloc(times, (j + 1) * sizeof(Time));
+        if(server.arg(i).length() == 5) {
+          // Aloca mais memória no array para mais um horario
+          times = (!j) ? (Time*)malloc(sizeof(Time)) : (Time*)realloc(times, (j + 1) * sizeof(Time));
           times[j].set(server.arg(i).substring(0, 2).toInt(), 
                        server.arg(i).substring(3, 5).toInt());
           j++;
