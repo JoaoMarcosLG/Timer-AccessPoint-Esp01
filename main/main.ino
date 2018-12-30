@@ -452,6 +452,8 @@ void handleConfig() {
   if(server.args() > 0) {
     byte j = 0;
 
+    free(times);  // Limpa memória alocada para cadastrar novos
+
     // Repete a quantidade de argumentos enviados
     for(byte i=0; i<server.args(); i++) {
       // Se for o argumento referente ao tempo ligado...
