@@ -56,6 +56,8 @@
 // --- Variaveis auxiliares ---
 bool wifi_status = false;
 
+bool relay_status = false;
+
 // --- Configuracoes da rede ---
 const char *ssid = "Timer";
 const char *password = "";
@@ -163,7 +165,8 @@ void buttonRead();    // Funcao de leitura do botao
 void EEPROM_write();  // Funcao para salvar informacoes na memoria EEPROM
 void EEPROM_read();   // Funcao para ler informacoes na memoria EEPROM
 
-bool timesCheck();    // Funcao que confere se esta no horario de acionar saida
+void timeOnCheck();   // Funcao que confere se esta no horario de acionar saida
+void timeOffCheck();  // Funcao que confere se esta no horario de descaionar saida
 void timeSort();      // Funcao para ordenar horarios
 Time nextTime();      // Funcao que retorna proximo horario de acionamento
 
@@ -199,32 +202,15 @@ void setup() {
 
 // --- LOOP ---
 void loop() {
-  // Variáveis
-  static bool relay_status = false;
-
   // Confere se botao foi pressionado
   buttonRead();
 
   // Se horarios ja configurados...
-  if(times_count > 0) {
-    static Time time_buf, now;  // Variavel que ira conter o instante de desacionamento da saida
-    now.set(rtc.now());
-
-    // Se relay desligado...
-    if(!relay_status) {
-      // Confere se esta no horario de acionar saida
-      if(timesCheck()) {
-        digitalWrite(relay, HIGH);  // Aciona saida
-        time_buf = now + time_on;  // Armazena horario de desacionamento da saida
-        relay_status = true;  // Atualiza Flag de estado do relay
-      }
-    }
-    else { // Senao...
-      if(now > time_buf) {
-        digitalWrite(relay, LOW);  // Desaciona saida
-        relay_status = false;  // Atualiza Flag de estado do relay
-      }
-    }
+  if(times_count) {
+    if(!relay_status)
+      timeOnCheck();  // Confere se esta no horario de acionar saida
+    else
+      timeOffCheck();  // Confere se esta no horario de desacionar saida
   }
   
   // Se WiFi ligado...
@@ -301,20 +287,29 @@ void EEPROM_read() {
   EEPROM.end();  // Salva dados na EEPROM
 }
 
-bool timesCheck() {
+void timeOnCheck() {
   DateTime now = rtc.now();  // Variavel que contem dados atuais do relogio
 
   // Confere se o horario atual "bate" com algum dos horarios de acionamento
   for(int i=0; i<times_count; i++) {
     if(times[i].cmp(now.hour(), now.minute())) { // Se sim...
       if(last_time != i){
-        last_time = i;
-        return true;  // Retorna 'true'
+        last_time = i;  // Atualiza variável do ultimo horario acionado
+        digitalWrite(relay, HIGH);  // Aciona saida
+        relay_status = true;  // Atualiza Flag de estado do relay
       }
     }
   }
+}
 
-  return false;  // Caso nenhum horario "bata", retorna 'false'
+void timeOffCheck() {
+  Time now, time_off;
+  now.set(rtc.now());
+  time_off = times[last_time] + time_on;  // Horario de desacionamento = horario de acionamento + tempo ligado
+  if(now > time_off) {
+    digitalWrite(relay, LOW);  // Desaciona saida
+    relay_status = false;  // Atualiza Flag de estado do relay
+  }
 }
 
 void timeSort() {
