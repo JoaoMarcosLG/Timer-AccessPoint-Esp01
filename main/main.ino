@@ -40,6 +40,8 @@
 #include <Wire.h>
 #include <RTClib.h>
 
+#include "time.h"
+
 // Constantes do projeto
 #define TIMES_COUNT    1
 #define TIMER_MODE     2
@@ -63,89 +65,6 @@ const char *ssid = "Timer";
 const char *password = "";
 
 ESP8266WebServer server(80);  // Instancia server (porta 80)
-
-// --- Estrutura dos horarios de acionamento ---
-typedef struct Time {
-  byte hour = 0;
-  byte minute = 0;
-  byte second = 0;
-
-  void set(byte h, byte m, byte s = 0) {
-    hour = h;
-    minute = m;
-    second = s;
-  }
-
-  void set(DateTime time) {
-    hour = time.hour();
-    minute = time.minute();
-    second = time.second();
-  }
-
-  bool cmp(byte h, byte m) {
-    if(h == hour && m == minute)
-      return true;
-    else
-      return false;
-  }
-
-  bool cmp(byte h, byte m, byte s) {
-    if(h == hour && m == minute && s == second)
-      return true;
-    else
-      return false;
-  }
-
-  bool operator == (const Time& other) {
-    if(hour == other.hour && minute == other.minute && second == other.second)
-      return true;
-    else
-      return false;
-  }
-
-  bool operator > (const Time& other) {
-    if(hour != other.hour) {
-      return (hour > other.hour ? true : false);
-    } else {
-      if(minute != other.minute) {
-        return (minute > other.minute ? true : false);
-      } else {
-        if(second != other.second) {
-          return (second > other.second ? true : false);
-        } else {
-          return false;
-        }
-      }
-    }
-  }
-
-  Time operator + (const Time& other) {
-    Time sum;
-    sum.set(hour + other.hour, minute + other.minute, second + other.second);
-    return sum;
-  }
-
-  unsigned long toSeconds() {
-    return ((hour * 3600) + (minute * 60) + second);
-  }
-
-  String toStr(bool seconds = true) {
-    String times_str[] = {String(hour), String(minute), String(second)};
-
-    for(int i=0; i<3; i++) {
-      // Adiciona zeros se preciso (9:5 -> 09:05)
-      if(times_str[i].length() < 2) {
-        times_str[i] = '0' + times_str[i];
-      }
-    }
-    
-    if(seconds) {
-      return (times_str[0] + ':' + times_str[1] + ':' + times_str[2]); 
-    } else {
-      return (times_str[0] + ':' + times_str[1]); 
-    }
-  }
-} Time; 
 
 // Variaveis do tipo Time
 Time *times;
@@ -180,7 +99,7 @@ void handleConfig();  // Funcao da pagina HTML de configuracao dos horarios de a
 // --- MAIN ---
 void setup() {
   // Espera 1s para estabilizacao
-	delay(1000);
+    delay(1000);
 
   // Configura IO's
   pinMode(button, INPUT);
@@ -215,7 +134,7 @@ void loop() {
   
   // Se WiFi ligado...
   if(wifi_status){  // Inicia comunicacao HTTP
-	  server.handleClient();
+      server.handleClient();
   }
 }
 
@@ -252,15 +171,15 @@ void EEPROM_write() {
   EEPROM.write(TIMER_MODE, timer_mode);
 
   byte j = TIMES_ADDR_INI;
-  for(int i=0; i<times_count; i++) {
-    EEPROM.write(j, times[i].hour);
-    EEPROM.write(j + 1, times[i].minute);
+  for(byte i=0; i<times_count; i++) {
+    EEPROM.write(j, times[i].get_hour());
+    EEPROM.write(j + 1, times[i].get_minute());
     j+=2;
   }
 
-  EEPROM.write(TIME_ON_HOUR, time_on.hour);
-  EEPROM.write(TIME_ON_MINUTE, time_on.minute);
-  EEPROM.write(TIME_ON_SECOND, time_on.second);
+  EEPROM.write(TIME_ON_HOUR, time_on.get_hour());
+  EEPROM.write(TIME_ON_MINUTE, time_on.get_minute());
+  EEPROM.write(TIME_ON_SECOND, time_on.get_second());
 
   EEPROM.end();  // Salva dados na EEPROM
 }
@@ -274,15 +193,11 @@ void EEPROM_read() {
 
   times = (Time*)malloc(times_count * sizeof(Time));
 
-  byte j = TIMES_ADDR_INI;
-  for(byte i=0; i<times_count; i++) {
-    times[i].set(EEPROM.read(j), EEPROM.read(j+1));
-    j+=2;
+  for(byte i=0, j=TIMES_ADDR_INI; i<times_count; i++, j+=2) {
+    times[i] = Time(EEPROM.read(j), EEPROM.read(j+1), 0);
   }
 
-  time_on.hour = EEPROM.read(TIME_ON_HOUR);
-  time_on.minute = EEPROM.read(TIME_ON_MINUTE);
-  time_on.second = EEPROM.read(TIME_ON_SECOND);
+  time_on = Time(EEPROM.read(TIME_ON_HOUR), EEPROM.read(TIME_ON_MINUTE), EEPROM.read(TIME_ON_SECOND));
 
   EEPROM.end();  // Salva dados na EEPROM
 }
@@ -291,7 +206,7 @@ void timeOnCheck() {
   DateTime now = rtc.now();  // Variavel que contem dados atuais do relogio
 
   // Confere se o horario atual "bate" com algum dos horarios de acionamento
-  for(int i=0; i<times_count; i++) {
+  for(byte i=0; i<times_count; i++) {
     if(times[i].cmp(now.hour(), now.minute())) { // Se sim...
       if(last_time != i){
         last_time = i;  // Atualiza variável do ultimo horario acionado
@@ -303,10 +218,9 @@ void timeOnCheck() {
 }
 
 void timeOffCheck() {
-  Time now, time_off;
-  now.set(rtc.now());
-  time_off = times[last_time] + time_on;  // Horario de desacionamento = horario de acionamento + tempo ligado
-  if(now > time_off) {
+  Time now = Time(rtc.now()); 
+  Time time_off = times[last_time] + time_on;  // Horario de desacionamento = horario de acionamento + tempo ligado
+  if(now >= time_off) {
     digitalWrite(relay, LOW);  // Desaciona saida
     relay_status = false;  // Atualiza Flag de estado do relay
   }
@@ -321,7 +235,7 @@ void timeSort() {
         small = j;
       }
     }
-    if(!(times[i] == times[small])) {
+    if(times[i] != times[small]) {
       Time buff = times[i];
       times[i] = times[small];
       times[small] = buff;
@@ -332,10 +246,10 @@ void timeSort() {
 Time nextTime() {
   // Se modo 'horarios'
   if(!timer_mode) {
-    Time now;
-    now.set(rtc.now());
+    Time now = Time(rtc.now());
+
     // Percorre todos os horarios para verificar proximo horario de acionamento
-    for(int i=0; i<times_count; i++) {
+    for(byte i=0; i<times_count; i++) {
       if(now > times[i]) {
         continue;
       } else {
@@ -390,15 +304,14 @@ void handleRoot() {
   }
 
   // Pega horário atual do RTC e adiciona à página
-  Time clk;
-  clk.set(rtc.now());
-  html.replace("{{ clock }}", clk.toStr());
+  Time clk = Time(rtc.now());
+  html.replace("{{ clock }}", clk.toStr(1));
 
   // Verifica proximo horario de acionamento e adiciona na pagina
   if(!times_count) {
     html.replace("{{ time }}", "Nenhum");
   } else {
-    html.replace("{{ time }}", nextTime().toStr(false));
+    html.replace("{{ time }}", nextTime().toStr(0));
   }
 
   // Manda página para browser
@@ -417,12 +330,11 @@ void handleTime() {
   info += String("Horários cadastrados: ") + String(times_count) + String("<br/>");
 
   if(times_count) {
-
-    for(int i=0; i<times_count; i++) {
-      info += String("<b>") + String(i+1) + String(". ") + times[i].toStr(false) + String("</b><br/>");
+    for(byte i=0; i<times_count; i++) {
+      info += String("<b>") + String(i+1) + String(". ") + times[i].toStr(0) + String("</b><br/>");
     }
 
-    info += String("Tempo acionado: ") + time_on.toStr() + String("<br/>");
+    info += String("Tempo acionado: ") + time_on.toStr(1) + String("<br/>");
   }
   
   html.replace("{{ info }}", info);
@@ -447,9 +359,9 @@ void handleConfig() {
       if(server.argName(i) == "lig") {
         // Se contem um valor de horario...
         if(server.arg(i).length() == 8) { // Configura tempo ligado
-          time_on.set(server.arg(i).substring(0, 2).toInt(), 
-                      server.arg(i).substring(3, 5).toInt(),
-                      server.arg(i).substring(6, 8).toInt());
+          time_on = Time(server.arg(i).substring(0, 2).toInt(), 
+                         server.arg(i).substring(3, 5).toInt(),
+                         server.arg(i).substring(6, 8).toInt());
         }
       } 
       // Senao, e referente aos horarios de ativacao...
@@ -458,8 +370,7 @@ void handleConfig() {
         if(server.arg(i).length() == 5) {
           // Aloca mais memória no array para mais um horario
           times = (!j) ? (Time*)malloc(sizeof(Time)) : (Time*)realloc(times, (j + 1) * sizeof(Time));
-          times[j].set(server.arg(i).substring(0, 2).toInt(), 
-                       server.arg(i).substring(3, 5).toInt());
+          times[j] = Time(server.arg(i).substring(0, 2).toInt(), server.arg(i).substring(3, 5).toInt(), 0);
           j++;
         }        
       }
@@ -471,6 +382,10 @@ void handleConfig() {
     
     // Limpa variável de armazenamento do ultimo horário de acionamento
     last_time = 255;
+
+    // Desabilita rele
+    digitalWrite(relay, LOW);
+    relay_status = false;
   }
 
   // Manda a pagina para o usuario
