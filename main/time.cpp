@@ -1,6 +1,5 @@
 #include "Arduino.h"
 #include "time.h"
-#include <RTClib.h>
 
 Time::Time() {
     _hour = 0;
