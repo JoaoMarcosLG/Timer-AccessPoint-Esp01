@@ -5,7 +5,6 @@
     Ler header da biblioteca para demais explicações: 'time.h'
 */
 
-#include "Arduino.h"
 #include "time.h"
 
 Time::Time() {
