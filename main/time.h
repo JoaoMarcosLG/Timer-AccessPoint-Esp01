@@ -1,4 +1,24 @@
-// Classe que define estrutura dos horarios
+/*
+    Autor: João Marcos Lana Gomes
+    Dezembro, 2018
+
+    === Descrição dos principais métodos ===
+
+        Time() : Construtor da classe (Pode ser iniciado nulo, passando horarios (hora, minuto, segundo) ou um DateTime);
+
+        get_hour(), get_minute(), get_second() : Retorna respectivos atributos;
+
+        cmp() : Compara com outro horário, e retorna verdadeiro se são iguais (Pode comparar com ou sem os segundos);
+
+        toSeconds() : Retorna horário em segundos (ex.: 12:30:10 => 45010);
+
+        toStr() : Converte horario em uma string (ex.: "12:30:10" ou "12:30");
+
+    === Operadores presentes ===
+
+       >  >=  <  <=  ==  != : Operadores booleanos
+       +  - : Operadores matemáticos
+*/
 
 #ifndef Time_h
 #define Time_h

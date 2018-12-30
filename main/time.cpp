@@ -1,3 +1,10 @@
+/*
+    Autor: João Marcos Lana Gomes
+    Dezembro, 2018
+
+    Ler header da biblioteca para demais explicações: 'time.h'
+*/
+
 #include "Arduino.h"
 #include "time.h"
 
