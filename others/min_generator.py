@@ -89,3 +89,5 @@ if __name__ == '__main__':
     
     # After, create min of html's replacing css and js
     searchByExt(dir, 'html', toArduinoHtml, ['\\file', dir, new_dir])
+
+    print('\033[1;92m' + '\n\n--- Terminado sem nenhum erro! ---\n\n' + '\033[0;37m')
