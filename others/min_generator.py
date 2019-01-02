@@ -10,6 +10,11 @@
 import os
 import re
 
+
+dir = os.path.join(os.path.dirname(__file__), os.path.pardir, 'WebPages')
+new_dir = os.path.join(dir, 'min')
+
+
 # Work with css and js files
 def minify(filename, dir_ori, dir_dest=None, new_name=None):
     if dir_dest is None:
@@ -81,8 +86,7 @@ def toArduinoHtml(filename, dir_ori, dir_min=None, new_name=None):
 
 # Main()
 if __name__ == '__main__':
-    dir = os.path.join(os.path.dirname(__file__), os.path.pardir, 'WebPages')
-    new_dir = os.path.join(dir, 'min')
+    global dir, new_dir
 
     # Before, generate min of all css and js files
     searchByExt(dir, ['js', 'css'], minify, ['\\file', dir, new_dir])
