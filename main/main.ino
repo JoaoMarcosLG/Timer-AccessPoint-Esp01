@@ -79,6 +79,10 @@ bool timer_mode = 0;  // Modo: (default) 0 -> horários; 1 -> intervalo
 
 byte last_time = 255;  // Variavel que armazena ultimo horario acionado
 
+// Variáveis usadas no INTERVAL_MODE
+#define TIME_OFF 0
+#define NEXT_TIME 1
+
 RTC_DS3231 rtc;  // Variavel do RTC DS3231
 
 // --- Funcoes auxiliares ---
@@ -219,13 +223,13 @@ void EEPROM_read() {
 }
 
 void timeOnCheck() {
+  Time now = Time(rtc.now());  // Variavel que contem dados atuais do relogio
+
   switch(timer_mode) {
     case TIME_MODE:
-      DateTime now = rtc.now();  // Variavel que contem dados atuais do relogio
-
       // Confere se o horario atual "bate" com algum dos horarios de acionamento
       for(byte i=0; i<times_count; i++) {
-        if(times[i].cmp(now.hour(), now.minute())) { // Se sim...
+        if(times[i].cmp(now.get_hour(), now.get_minute())) { // Se sim...
           if(last_time != i){
             last_time = i;  // Atualiza variável do ultimo horario acionado
             digitalWrite(relay, HIGH);  // Aciona saida
@@ -236,25 +240,38 @@ void timeOnCheck() {
     break;
 
     case INTERVAL_MODE:
-
+      // Verifica se o horário atual é "maior ou igual" que o próximo horário de acionamento
+      if(times[NEXT_TIME].cmp(now.get_hour(), now.get_minute())) {
+        digitalWrite(relay, HIGH);  // Aciona saida
+        relay_status = true;  // Atualiza Flag de estado do relay
+        times[NEXT_TIME] = times[NEXT_TIME] + times[TIME_OFF];  // Atualiza variável do proximo horario acionado
+      }
     break;
   }
 }
 
 void timeOffCheck() {
+  Time now = Time(rtc.now());
+
+  Time time_off;
+
   switch(timer_mode) {
     case TIME_MODE:
-      Time now = Time(rtc.now()); 
-      Time time_off = times[last_time] + time_on;  // Horario de desacionamento = horario de acionamento + tempo ligado
+      time_off = times[last_time] + time_on;  // Horario de desacionamento = horario de acionamento + tempo ligado
 
-      if(now >= time_off) {
+      if(now > time_off) {
         digitalWrite(relay, LOW);  // Desaciona saida
         relay_status = false;  // Atualiza Flag de estado do relay
       }
     break;
 
     case INTERVAL_MODE:
+      time_off = times[NEXT_TIME] - times[TIME_OFF] + time_on;  // Horario de desacionamento = ultimo horario de acionamento + tempo ligado
 
+      if(now > time_off) {
+        digitalWrite(relay, LOW);  // Desaciona saida
+        relay_status = false;  // Atualiza Flag de estado do relay
+      }
     break;
   }
 }
@@ -277,24 +294,22 @@ void timeSort() {
 }
 
 Time nextTime() {
-  // Se modo 'horarios'
+  Time now = Time(rtc.now());
+  
   switch(timer_mode) {
     case TIME_MODE:
-      Time now = Time(rtc.now());
-
       // Percorre todos os horarios para verificar proximo horario de acionamento
       for(byte i=0; i<times_count; i++) {
-        if(now > times[i]) {
+        if(now > times[i])
           continue;
-        } else {
+        else
           return times[i];
-        }
       }
       return times[0];  // Se horario atual 'maior' que todos os horarios, entao retorna primeiro horario
     break;
 
     case INTERVAL_MODE:
-
+      return times[NEXT_TIME];
     break;
   }
 }
@@ -353,15 +368,23 @@ void handleTime() {
   // Monta html para exibição de informações cadatradas
   String info = "";
 
-  info += String("Horários cadastrados: ") + String(times_count) + String("<br/>");
+  switch(timer_mode) {
+    case TIME_MODE:
+      info += String("Horários cadastrados: ") + String(times_count) + String("<br/>");
 
-  if(times_count) {
-    for(byte i=0; i<times_count; i++) {
-      info += String("<b>") + String(i+1) + String(". ") + times[i].toStr(0) + String("</b><br/>");
-    }
+      if(times_count) {
+        for(byte i=0; i<times_count; i++) {
+          info += String("<b>") + String(i+1) + String(". ") + times[i].toStr(0) + String("</b><br/>");
+        }
+      }
+    break;
 
-    info += String("Tempo acionado: ") + time_on.toStr(1) + String("<br/>");
+    case INTERVAL_MODE:
+      info += String("Tempo desligado: ") + times[TIME_OFF].toStr(0) + String("<br/>");
+    break;
   }
+
+  info += String("Tempo acionado: ") + time_on.toStr(1) + String("<br/>");
   
   html.replace("{{ info }}", info);
 
@@ -375,7 +398,7 @@ void handleMode() {
 }
 
 void handleIntervalMode() {
-  String html = "<!doctype html><html lang=\"pt-br\"><head><title>Timer</title><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"><style>.flex-container {display: flex;flex-direction: column;justify-content: center;}.center-x {display: block;margin-left: auto;margin-right: auto;}.no-margin {margin: 0;}.time-input {display: flex;flex-direction: row;}.time-input input {width: 50vw;margin: 5px !important;}.time-input button {margin-top: 5px;height: 42px;line-height: 30px;}.time-input label { margin: auto; }.risk {height:2px;border:none;color:#212529;background-color:#212529;margin-top: 0;}html {background: #f9f9f9;margin-top: 24px;}div, form {margin-bottom: 12px;}input[type=\"text\"] {border-radius: 8px;font-size: 20px;margin-top: 12px;margin-bottom: 18px;height: 36px;padding-left: 10px;}h1, h2, h3, h4, h5, h6 {font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif;font-weight: 400;line-height: 1.5;color: #212529;margin: 0;}h1 { font-size: 70px; }h3 { font-size: 40px; }h5 { font-size: 20px; }.btn-content {margin: 12px;}.btn-content h4 {color: white;text-shadow: 2px 2px #212529;}.btn-content p {font-size: 18px;height: 60px;width: 100%;text-align: center;background-color: #0069d9;border: 2px solid rgb(36, 113, 163, 0.4);border-radius: 5px;}.btn {display: inline-block;font-weight: 400;text-align: center;white-space: nowrap;vertical-align: middle;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;border: 1px solid transparent;padding: 0.375rem 0.75rem;font-size: 1.6rem;line-height: 1.5;border-radius: 0.25rem;transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;}.btn:focus, .btn.focus {outline: 0;box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);}.btn-primary {color: #fff;background-color: #007bff;border-color: #007bff;}.btn-primary:hover {color: #fff;background-color: #0069d9;border-color: #0062cc;}.btn-success {color: #fff;background-color: #28a745;border-color: #28a745;}.btn-success:hover {color: #fff;background-color: #218838;border-color: #1e7e34;}.btn-danger {color: #fff;background-color: #dc3545;border-color: #dc3545;}.btn-danger:hover {color: #fff;background-color: #c82333;border-color: #bd2130;}.btn-secondary {color: #fff;background-color: #6c757d;border-color: #6c757d;}.btn-secondary:hover {color: #fff;background-color: #5a6268;border-color: #545b62;}</style></head><body><div class=\"flex-container\"><h3 class=\"center-x\">Tempos</h3><div class=\"risk\"></div><form><div id=\"times-container\"><div class=\"time-input\"><label>Tempo Desligado:</label><input name=\"desl\" type=\"text\" placeholder=\"00:00\" autocomplete=\"off\" maxlength=\"5\" onkeyup=\"check_time(this, 1)\" required></div></div><div class=\"time-input\"><label>Tempo ligado:</label><input name=\"lig\" type=\"text\" placeholder=\"00:00:00\" autocomplete=\"off\" maxlength=\"8\" onkeyup=\"check_time(this, 2)\" required></div><div class=\"center-x\" style=\"display: flex; justify-content: space-between\"><button type=\"button\" class=\"btn btn-secondary\" style=\"width: 49%\" onclick=\"window.location.replace('config')\">Cancelar</button><button type=\"submit\" class=\"btn btn-success\" style=\"width: 49%\">Salvar</button></div></form></div></body><script>var previous_length = {};function check_time(element, repeat) {id = element.name;if(!(id in previous_length)) { previous_length[id] = 0; }for(let i=0; i < repeat; i++) {if(element.value.length == ((3*i)+2) && element.value.length > previous_length[id]) {element.value += ':';}}previous_length[id] = element.value.length;}var time_count = 1;function add_cell() {let new_cell = document.createElement('div');new_cell.className = 'time-input';new_cell.innerHTML = `<label>Horário ${++time_count}:</label><input name=\"h${time_count}\" type=\"text\" placeholder=\"00:00\" autocomplete=\"off\" maxlength=\"5\" onkeyup=\"check_time(this, 1)\" required><button type=\"button\" class=\"btn btn-success\" style=\"height: 42px\" onclick=\"add_cell()\">+</button>`;document.getElementById('times-container').appendChild(new_cell);new_cell.getElementsByTagName('input')[0].focus();let previous_button = new_cell.previousElementSibling.getElementsByTagName('button')[0];previous_button.className = 'btn btn-danger';previous_button.innerHTML = 'x';previous_button.onclick = function() { remove_cell(previous_button) };}function remove_cell(element) {let times_container = document.getElementById('times-container');times_container.removeChild(element.parentNode);let count = 0;for(let i=0; i < times_container.children.length; i++) {times_container.children[i].firstChild.innerText = `Horário ${++count}:`;}time_count = count;}function sync_clk(form) {let date = new Date();let input_hours = document.createElement('input');input_hours.type = 'text';input_hours.name = 'hours';input_hours.value = date.getHours();input_hours.hidden = true;form.appendChild(input_hours);let input_minutes = document.createElement('input');input_minutes.type = 'text';input_minutes.name = 'minutes';input_minutes.value = date.getMinutes();input_minutes.hidden = true;form.appendChild(input_minutes);let input_seconds = document.createElement('input');input_seconds.type = 'text';input_seconds.name = 'seconds';input_seconds.value = date.getSeconds();input_seconds.hidden = true;form.appendChild(input_seconds);}function verify_request(new_url) {if(location.search != '') {window.location.replace(new_url);}}</script><script>window.onload = function () { verify_request('config'); };</script></html>";
+  String html = "<!doctype html><html lang=\"pt-br\"><head><title>Timer</title><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"><style>.flex-container {display: flex;flex-direction: column;justify-content: center;}.center-x {display: block;margin-left: auto;margin-right: auto;}.no-margin {margin: 0;}.time-input {display: flex;flex-direction: row;}.time-input input {width: 50vw;margin: 5px !important;}.time-input button {margin-top: 5px;height: 42px;line-height: 30px;}.time-input label { margin: auto; }.risk {height:2px;border:none;color:#212529;background-color:#212529;margin-top: 0;}html {background: #f9f9f9;margin-top: 24px;}div, form {margin-bottom: 12px;}input[type=\"text\"] {border-radius: 8px;font-size: 20px;margin-top: 12px;margin-bottom: 18px;height: 36px;padding-left: 10px;}h1, h2, h3, h4, h5, h6 {font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif;font-weight: 400;line-height: 1.5;color: #212529;margin: 0;}h1 { font-size: 70px; }h3 { font-size: 40px; }h5 { font-size: 20px; }.btn-content {margin: 12px;}.btn-content h4 {color: white;text-shadow: 2px 2px #212529;}.btn-content p {font-size: 18px;height: 60px;width: 100%;text-align: center;background-color: #0069d9;border: 2px solid rgb(36, 113, 163, 0.4);border-radius: 5px;}.btn {display: inline-block;font-weight: 400;text-align: center;white-space: nowrap;vertical-align: middle;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;border: 1px solid transparent;padding: 0.375rem 0.75rem;font-size: 1.6rem;line-height: 1.5;border-radius: 0.25rem;transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;}.btn:focus, .btn.focus {outline: 0;box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);}.btn-primary {color: #fff;background-color: #007bff;border-color: #007bff;}.btn-primary:hover {color: #fff;background-color: #0069d9;border-color: #0062cc;}.btn-success {color: #fff;background-color: #28a745;border-color: #28a745;}.btn-success:hover {color: #fff;background-color: #218838;border-color: #1e7e34;}.btn-danger {color: #fff;background-color: #dc3545;border-color: #dc3545;}.btn-danger:hover {color: #fff;background-color: #c82333;border-color: #bd2130;}.btn-secondary {color: #fff;background-color: #6c757d;border-color: #6c757d;}.btn-secondary:hover {color: #fff;background-color: #5a6268;border-color: #545b62;}</style></head><body><div class=\"flex-container\"><h3 class=\"center-x\">Tempos</h3><div class=\"risk\"></div><form><div class=\"time-input\"><label>1º Horário de acionamento:</label><input name=\"h1\" type=\"text\" placeholder=\"00:00\" autocomplete=\"off\" maxlength=\"5\" onkeyup=\"check_time(this, 1)\" required></div><div class=\"time-input\"><label>Tempo Desligado:</label><input name=\"desl\" type=\"text\" placeholder=\"00:00\" autocomplete=\"off\" maxlength=\"5\" onkeyup=\"check_time(this, 1)\" required></div><div class=\"time-input\"><label>Tempo ligado:</label><input name=\"lig\" type=\"text\" placeholder=\"00:00:00\" autocomplete=\"off\" maxlength=\"8\" onkeyup=\"check_time(this, 2)\" required></div><div class=\"center-x\" style=\"display: flex; justify-content: space-between\"><button type=\"button\" class=\"btn btn-secondary\" style=\"width: 49%\" onclick=\"window.location.replace('config')\">Cancelar</button><button type=\"submit\" class=\"btn btn-success\" style=\"width: 49%\">Salvar</button></div></form></div></body><script>var previous_length = {};function check_time(element, repeat) {id = element.name;if(!(id in previous_length)) { previous_length[id] = 0; }for(let i=0; i < repeat; i++) {if(element.value.length == ((3*i)+2) && element.value.length > previous_length[id]) {element.value += ':';}}previous_length[id] = element.value.length;}var time_count = 1;function add_cell() {let new_cell = document.createElement('div');new_cell.className = 'time-input';new_cell.innerHTML = `<label>Horário ${++time_count}:</label><input name=\"h${time_count}\" type=\"text\" placeholder=\"00:00\" autocomplete=\"off\" maxlength=\"5\" onkeyup=\"check_time(this, 1)\" required><button type=\"button\" class=\"btn btn-success\" style=\"height: 42px\" onclick=\"add_cell()\">+</button>`;document.getElementById('times-container').appendChild(new_cell);new_cell.getElementsByTagName('input')[0].focus();let previous_button = new_cell.previousElementSibling.getElementsByTagName('button')[0];previous_button.className = 'btn btn-danger';previous_button.innerHTML = 'x';previous_button.onclick = function() { remove_cell(previous_button) };}function remove_cell(element) {let times_container = document.getElementById('times-container');times_container.removeChild(element.parentNode);let count = 0;for(let i=0; i < times_container.children.length; i++) {times_container.children[i].firstChild.innerText = `Horário ${++count}:`;}time_count = count;}function sync_clk(form) {let date = new Date();let input_hours = document.createElement('input');input_hours.type = 'text';input_hours.name = 'hours';input_hours.value = date.getHours();input_hours.hidden = true;form.appendChild(input_hours);let input_minutes = document.createElement('input');input_minutes.type = 'text';input_minutes.name = 'minutes';input_minutes.value = date.getMinutes();input_minutes.hidden = true;form.appendChild(input_minutes);let input_seconds = document.createElement('input');input_seconds.type = 'text';input_seconds.name = 'seconds';input_seconds.value = date.getSeconds();input_seconds.hidden = true;form.appendChild(input_seconds);}function verify_request(new_url) {if(location.search != '') {window.location.replace(new_url);}}</script><script>window.onload = function () { verify_request('config'); };</script></html>";
   
   // Trata requisição
   if(server.args() > 0) {
@@ -384,7 +407,7 @@ void handleIntervalMode() {
     // Percorre argumentos da requisição
     for(byte i=0; i<server.args(); i++) {
       if(server.argName(i) == "desl") {  // Configura tempo desligado
-        times[1] = Time(server.arg(i).substring(0, 2).toInt(), server.arg(i).substring(0, 2).toInt(), 0);
+        times[TIME_OFF] = Time(server.arg(i).substring(0, 2).toInt(), server.arg(i).substring(3, 5).toInt(), 0);
       } else if(server.argName(i) == "lig") {
         if(server.arg(i).length() == 8) {  // Configura tempo ligado
           time_on = Time(server.arg(i).substring(0, 2).toInt(), 
@@ -392,18 +415,15 @@ void handleIntervalMode() {
                          server.arg(i).substring(6, 8).toInt());
         }
       } else if(server.argName(i) == "h1") {  // Configura primeiro horario de aconamento
-        times[0] = Time(server.arg(i).substring(0, 2).toInt(), server.arg(i).substring(0, 2).toInt(), 0);
+        times[NEXT_TIME] = Time(server.arg(i).substring(0, 2).toInt(), server.arg(i).substring(3, 5).toInt(), 0);
       }
     }
 
     // Configura variáveis auxiliares
     timer_mode = INTERVAL_MODE;  //Atualiza flag do modo de operação
 
-    times_count = 1;  // Atualiza numero de horarios
+    times_count = 2;  // Atualiza numero de horarios
     EEPROM_write();  // Salva alteracoes na EEPROM
-    
-    // Limpa variável de armazenamento do ultimo horário de acionamento
-    last_time = 255;
 
     // Desabilita rele
     digitalWrite(relay, LOW);
