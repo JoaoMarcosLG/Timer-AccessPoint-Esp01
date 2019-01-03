@@ -379,19 +379,20 @@ void handleIntervalMode() {
   
   // Trata requisição
   if(server.args() > 0) {
-    free(times);  // Limpa memória alocada
+    times = (Time*)malloc(2 * sizeof(Time));
 
     // Percorre argumentos da requisição
     for(byte i=0; i<server.args(); i++) {
       if(server.argName(i) == "desl") {  // Configura tempo desligado
-        times = (Time*)malloc(sizeof(Time));
-        times[0] = Time(server.arg(i).substring(0, 2).toInt(), server.arg(i).substring(0, 2).toInt(), 0);
+        times[1] = Time(server.arg(i).substring(0, 2).toInt(), server.arg(i).substring(0, 2).toInt(), 0);
       } else if(server.argName(i) == "lig") {
         if(server.arg(i).length() == 8) {  // Configura tempo ligado
           time_on = Time(server.arg(i).substring(0, 2).toInt(), 
                          server.arg(i).substring(3, 5).toInt(),
                          server.arg(i).substring(6, 8).toInt());
         }
+      } else if(server.argName(i) == "h1") {  // Configura primeiro horario de aconamento
+        times[0] = Time(server.arg(i).substring(0, 2).toInt(), server.arg(i).substring(0, 2).toInt(), 0);
       }
     }
 
