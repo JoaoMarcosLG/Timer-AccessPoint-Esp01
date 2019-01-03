@@ -100,7 +100,48 @@ bool Time::operator <= (const Time& other) {
 }
 
 Time Time::operator + (const Time& other) {
-    return Time(_hour + other._hour, _minute + other._minute, _second + other._second);
+    byte hour = _hour + other._hour;
+    byte minute = _minute + other._minute;
+    byte second = _second + other._second;
+    
+    if(second > 59) {
+        minute += second / 60;
+        second = second % 60;
+    }
+
+    if(minute > 59) {
+        hour += minute / 60;
+        minute = minute % 60;
+    }
+
+    if(hour > 23) {
+        hour = hour % 24;
+    }
+
+    return Time(hour, minute, second);
+}
+
+Time Time::operator - (const Time& other) {
+    byte hour = _hour - other._hour;
+    byte minute = _minute - other._minute;
+    byte second = _second - other._second;
+    
+    if(second < 0) {
+        minute -= (second / 60) + 1;
+        second = second + 60;
+    }
+
+    if(minute < 0) {
+        hour -= (minute / 60) + 1;
+        minute = minute + 60;
+    }
+
+    if(hour < 0) {
+        hour = hour + 24;
+    }
+
+
+    return Time(hour, minute, second);
 }
 
 unsigned long Time::toSeconds() {
