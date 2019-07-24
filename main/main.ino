@@ -34,6 +34,7 @@
 // --- Bibliotecas ---
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h> 
+#include <DNSServer.h>
 #include <ESP8266WebServer.h>
 
 #include <EEPROM.h>
@@ -63,6 +64,12 @@ bool relay_status = false;
 // --- Configuracoes da rede ---
 const char *ssid = "Timer";
 const char *password = "";
+
+IPAddress apIP(192, 168, 4, 1);
+
+// --- DNS server ---
+const byte DNS_PORT = 53;
+DNSServer dnsServer;
 
 ESP8266WebServer server(80);  // Instancia server (porta 80)
 
@@ -99,12 +106,15 @@ Time nextTime();      // Funcao que retorna proximo horario de acionamento
 void wifiBegin();     // Funcao que liga AccessPoint
 void wifiSleep();     // Funcao que desliga AccessPoint
 
+String toStringIp(IPAddress ip);
+
 // --- Back-End do servidor ---
 void handleRoot();
 void handleTime();
 void handleMode();
 void handleIntervalMode();
 void handleTimeMode();
+void handleCaptivePortal();
 
 // --- MAIN ---
 void setup() {
@@ -124,6 +134,11 @@ void setup() {
   server.on("/mode_select", handleMode);
   server.on("/interval_mode", handleIntervalMode);
   server.on("/time_mode" , handleTimeMode);
+  server.onNotFound(handleCaptivePortal);
+
+  // Configura DNS server
+  dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+  dnsServer.start(DNS_PORT, "*", apIP);
 
   // Inicia Servidor
   server.begin();
@@ -153,8 +168,9 @@ void loop() {
   }
   
   // Se WiFi ligado...
-  if(wifi_status){  // Inicia comunicacao HTTP
+  if(wifi_status){
     server.handleClient();
+    dnsServer.processNextRequest();
   }
 }
 
@@ -315,8 +331,10 @@ Time nextTime() {
 }
 
 void wifiBegin() {
+  WiFi.mode(WIFI_AP);
   WiFi.forceSleepWake();        // Forca re-ligamento do WIFI
   delay(10);                    // Delay para estabilizacao
+  WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
   WiFi.softAP(ssid, password);  // Inicia AccessPoint
 }
 
@@ -327,7 +345,21 @@ void wifiSleep() {
   delay(10);               // Delay para estabilizacao
 }
 
+String toStringIp(IPAddress ip) {
+  String res = "";
+  for (int i = 0; i < 3; i++) {
+    res += String((ip >> (8 * i)) & 0xFF) + ".";
+  }
+  res += String(((ip >> 8 * 3)) & 0xFF);
+  return res;
+}
+
 void handleRoot() {
+  // Check CaptivePortal
+  if (server.hostHeader() != String("timer")) {
+    return handleCaptivePortal();
+  }
+  
   // Pagina HTML inicial
   String html = "<!doctype html><html lang=\"pt-br\"><head><title>Timer</title><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"><meta http-equiv=\"refresh\" content=\"1\"><style>.flex-container {display: flex;flex-direction: column;justify-content: center;}.center-x {display: block;margin-left: auto;margin-right: auto;}.no-margin {margin: 0;}.time-input {display: flex;flex-direction: row;}.time-input input {width: 50vw;margin: 5px !important;}.time-input button {margin-top: 5px;height: 42px;line-height: 30px;}.time-input label { margin: auto; }.risk {height:2px;border:none;color:#212529;background-color:#212529;margin-top: 0px;}html {background: rgb(248, 248, 248);margin-top: 24px;}div, form {margin-bottom: 12px;}input[type=\"text\"] {border-radius: 8px;font-size: 20px;margin-top: 12px;margin-bottom: 18px;height: 36px;padding-left: 10px;}h1, h2, h3, h4, h5, h6 {font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif;font-weight: 400;line-height: 1.5;color: #212529;margin: 0;}h1 { font-size: 70px; }h3 { font-size: 40px; }h5 { font-size: 20px; }.btn {display: inline-block;font-weight: 400;text-align: center;white-space: nowrap;vertical-align: middle;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;border: 1px solid transparent;padding: 0.375rem 0.75rem;font-size: 1.6rem;line-height: 1.5;border-radius: 0.25rem;transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;}.btn:focus, .btn.focus {outline: 0;box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);}.btn-primary {color: #fff;background-color: #007bff;border-color: #007bff;}.btn-primary:hover {color: #fff;background-color: #0069d9;border-color: #0062cc;}.btn-success {color: #fff;background-color: #28a745;border-color: #28a745;}.btn-success:hover {color: #fff;background-color: #218838;border-color: #1e7e34;}.btn-danger {color: #fff;background-color: #dc3545;border-color: #dc3545;}.btn-danger:hover {color: #fff;background-color: #c82333;border-color: #bd2130;}.btn-secondary {color: #fff;background-color: #6c757d;border-color: #6c757d;}.btn-secondary:hover {color: #fff;background-color: #5a6268;border-color: #545b62;}</style></head><body><div class=\"flex-container\"><div class=\"center-x\"><h1 >Timer</h1></div><div class=\"risk\"></div><div class=\"center-x\"><h3>{{ clock }}</h3></div><div class=\"center-x\"><h5>Prox. Horário: {{ time }}</h5></div><div class=\"center-x\" style=\"margin-top: 12px\"><button class=\"btn btn-primary\" style=\"width: 90vw; height: 100px\" onclick=\"window.location.replace('config')\">Configurações</button></div><form class=\"center-x\" onsubmit=\"sync_clk(this)\"><div><button type=\"submit\" class=\"btn btn-secondary\" style=\"width: 90vw\">Sincronizar relógio</button></div></form></div></body><script>var previous_length = {};function check_time(element, repeat) {id = element.name;if(!(id in previous_length)) { previous_length[id] = 0; }for(let i=0; i < repeat; i++) {if(element.value.length == ((3*i)+2) && element.value.length > previous_length[id]) {element.value += ':';}}previous_length[id] = element.value.length;}var time_count = 1;function add_cell() {let new_cell = document.createElement('div');new_cell.className = 'time-input';new_cell.innerHTML = `<label>Horário ${++time_count}:</label><input name=\"h${time_count}\" type=\"text\" placeholder=\"00:00\" autocomplete=\"off\" maxlength=\"5\" onkeyup=\"check_time(this, 1)\" required><button type=\"button\" class=\"btn btn-success\" style=\"height: 42px\" onclick=\"add_cell()\">+</button>`;document.getElementById('times-container').appendChild(new_cell);new_cell.getElementsByTagName('input')[0].focus();let previous_button = new_cell.previousElementSibling.getElementsByTagName('button')[0];previous_button.className = 'btn btn-danger';previous_button.innerHTML = 'x';previous_button.onclick = function() { remove_cell(previous_button) };}function remove_cell(element) {let times_container = document.getElementById('times-container');times_container.removeChild(element.parentNode);let count = 0;for(let i=0; i < times_container.children.length; i++) {times_container.children[i].firstChild.innerText = `Horário ${++count}:`;}time_count = count;}function sync_clk(form) {let date = new Date();let input_hours = document.createElement('input');input_hours.type = 'text';input_hours.name = 'hours';input_hours.value = date.getHours();input_hours.hidden = true;form.appendChild(input_hours);let input_minutes = document.createElement('input');input_minutes.type = 'text';input_minutes.name = 'minutes';input_minutes.value = date.getMinutes();input_minutes.hidden = true;form.appendChild(input_minutes);let input_seconds = document.createElement('input');input_seconds.type = 'text';input_seconds.name = 'seconds';input_seconds.value = date.getSeconds();input_seconds.hidden = true;form.appendChild(input_seconds);}function verify_request(new_url) {if(location.search != '') {window.location.replace(new_url);}}</script><script>window.onload = function () { verify_request('/'); };</script></html>";
 
@@ -482,4 +514,10 @@ void handleTimeMode() {
 
   // Manda a pagina para o usuario
   server.send(200, "text/html", html);
+}
+
+void handleCaptivePortal() {
+  server.sendHeader("Location", String("http://timer/"), true);
+  server.send(302, "text/plain", "");
+  server.client().stop();
 }
